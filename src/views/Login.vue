@@ -21,8 +21,8 @@
                    Sign In
                    <span>
                 <small>
-                  <router-link to="">
-                  Create Account
+                  <router-link :to="organizationUrl ? `/pages/${organizationUrl}/register` : '/sign-up'">
+                  {{ organizationUrl ? 'Join Now' : 'Create Account' }}
                   </router-link></small>
                    </span>
                 </v-card-title>
@@ -82,7 +82,7 @@
     v-on:close-dialog="closeDialog"
     :alert="alertDialog"
     :text="alertText"
-    :color="alertColor">
+    :type="alertColor">
     </alert-component>
 </div>
 </template>
@@ -107,15 +107,26 @@ export default {
       })
     }
   },
+  computed: {
+    organizationUrl: {
+      get () {
+        return this.$route.params.organizationUrl
+      }
+    }
+  },
   methods: {
     loginUser () {
+      this.alertColor = 'success'
+      this.alertText = 'Successful'
+      this.alertDialog = true
+      this.loginLoading = false
       this.loginLoading = true
       login(this.login).then((response) => {
         console.log(response)
         // if (response.status === 200) {
         setAuthToken(response.data.jwt)
         // Cookies.set(response.jwt)
-        this.alertColor = 'green lighten-2'
+        this.alertColor = 'success'
         this.alertText = 'Successful'
         this.alertDialog = true
         this.loginLoading = false
@@ -127,7 +138,7 @@ export default {
       }).catch((error) => {
         console.log(error.response)
         this.loginLoading = false
-        this.alertColor = 'error lighten-2'
+        this.alertColor = 'error'
         this.alertText = error.response.data.message[0].messages[0].message
         this.alertDialog = true
         this.hideAlert()

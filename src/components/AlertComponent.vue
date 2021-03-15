@@ -32,7 +32,7 @@ export default {
       type: String,
       default: null
     },
-    color: {
+    type: {
       type: String,
       default: null
     }
@@ -45,6 +45,19 @@ export default {
       setTimeout(() => {
         this.alert = false
       }, 2500)
+    }
+  },
+  computed: {
+    color () {
+      if (this.type === 'success') {
+        return 'green lighten-2'
+      } else if (this.type === 'error') {
+        return 'error lighten-2'
+      } else if (this.type === 'warning') {
+        return 'warning lighten-2'
+      } else {
+        return 'primary'
+      }
     }
   },
   mounted () {

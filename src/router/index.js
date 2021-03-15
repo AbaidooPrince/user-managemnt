@@ -12,24 +12,13 @@ const routes = [
     component: Home
   },
   {
-    path: '/pages/:groupUrl',
-    props: true,
-    name: 'OrganizationPage',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: function () {
-      return import(/* webpackChunkName: "group-page" */ '../views/containers/OrganizationPage.vue')
-    }
-  },
-  {
     path: '/sign-up',
-    name: 'Sign-up',
+    name: 'SignUp',
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
     component: function () {
-      return import(/* webpackChunkName: "register" */ '../views/Register.vue')
+      return import(/* webpackChunkName: "register" */ '../views/SignUp.vue')
     }
   },
   {
@@ -43,7 +32,42 @@ const routes = [
     }
   },
   {
-    path: '/:groupUrl/login',
+    path: '/pages/:organizationUrl',
+    props: true,
+    name: 'OrganizationPage',
+    // route level code-splitting
+    // this generates a separate chunk (about.[hash].js) for this route
+    // which is lazy-loaded when the route is visited.
+    component: function () {
+      return import(/* webpackChunkName: "group-page" */ '../views/containers/OrganizationPage.vue')
+    }
+  },
+  {
+    path: '/pages/:organizationUrl/login',
+    name: 'OrganizationLogin',
+    meta: {
+    },
+    // route level code-splitting
+    // this generates a separate chunk (about.[hash].js) for this route
+    // which is lazy-loaded when the route is visited.
+    component: function () {
+      return import(/* webpackChunkName: "login" */ '../views/Login.vue')
+    }
+  },
+  {
+    path: '/pages/:organizationUrl/register',
+    name: 'OrganizationRegister',
+    meta: {
+    },
+    // route level code-splitting
+    // this generates a separate chunk (about.[hash].js) for this route
+    // which is lazy-loaded when the route is visited.
+    component: function () {
+      return import(/* webpackChunkName: "login" */ '../views/containers/OrganizationRegister.vue')
+    }
+  },
+  {
+    path: '/login',
     name: 'Login',
     meta: {
     },

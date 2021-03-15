@@ -7,6 +7,7 @@ import axios from 'axios'
 import vuetify from './plugins/vuetify'
 import { Form } from 'vform'
 import AlertComponent from './components/AlertComponent.vue'
+import AdminMessengerForm from './components/AdminMessengerForm.vue'
 // import config from '../public/config'
 
 Vue.config.productionTip = false
@@ -15,7 +16,8 @@ Vue.config.productionTip = false
 window.axios = axios
 
 // Components
-Vue.component('ALertComponent', AlertComponent)
+Vue.component('AlertComponent', AlertComponent)
+Vue.component('AdminMessengerForm', AdminMessengerForm)
 
 window.Form = Form
 

@@ -1,11 +1,13 @@
 <template>
     <div>
+      <p>I am Organization Page
+      </p>
     </div>
 </template>
 <script>
 export default {
   name: 'OrganizationPage',
-  props: ['groupUrl'],
+  props: ['organizationUrl'],
   data () {
     return {
     }

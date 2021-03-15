@@ -3,7 +3,6 @@
     <v-app-bar
       app
       class="transparent"
-      elevation="1"
       elevate-on-scroll
       dark
     >
@@ -27,10 +26,10 @@
         />
       </div>
       <v-spacer></v-spacer>
-      <v-btn link to="/login">Login
+      <v-btn link :to="organizationUrl ? `/pages/${organizationUrl}/login` : '/login'">Login
       </v-btn>
       <v-spacer></v-spacer>
-      <v-btn link to="/sign-up">Register
+      <v-btn link :to="organizationUrl ? `/pages/${organizationUrl}/register` : '/sign-up'">Register
       </v-btn>
       <v-spacer></v-spacer>
       <v-btn to="/pages/new-group" link color="secondary">Users Page</v-btn>
@@ -73,6 +72,11 @@ export default {
     //
   }),
   computed: {
+    organizationUrl: {
+      get () {
+        return this.$route.params.organizationUrl
+      }
+    },
     selectedTheme: {
       get () {
         return this.$store.state.theme
