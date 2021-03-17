@@ -15,7 +15,9 @@ export default new Vuex.Store({
     loading: false,
     loaded: false,
     theme: false,
-    users: []
+    users: [],
+    allOrganizations: [],
+    organizationPage: {}
   },
   mutations: {
     SET_APP_THEME (state, data) {
@@ -32,9 +34,40 @@ export default new Vuex.Store({
     },
     SET_LOADING (state, data) {
       state.loading = data
+    },
+    SET_ALL_ORGANIZATIONS (state, data) {
+      state.allOrganizations = data
+    },
+    SET_SINGLE_ORGANIZATIONS (state, data) {
+      state.organizationPage = data
     }
   },
   actions: {
+    getOrganizationByUrl ({ commit }, url) {
+      Api().get(`/organizations?organizationUrl=${url}`).then((response) => {
+        if (response.status === 200 && response.data !== []) {
+          commit('SET_SINGLE_ORGANIZATIONS', response.data[0])
+        } else if (response.status === 200 && response.data === []) {
+          this.$router.push('/404')
+        }
+      }).catch()
+    },
+    getAllOrganizations ({ commit }) {
+      Api().get('/organizations').then((response) => {
+        if (response.status === 200) {
+          commit('SET_ALL_ORGANIZATIONS', response.data)
+        }
+      }).catch()
+    },
+    getSingleOrganization ({ commit }, id) {
+      commit('SET_LOADING', true)
+      Api().get(`/organizations/${id}`).then((response) => {
+        if (response.status === 200) {
+          commit('SET_SINGLE_ORGANIZATIONS', response.data)
+          commit('SET_LOADING', false)
+        }
+      }).catch()
+    },
     getUsers ({ commit }, data) {
       commit('SET_LOADING', true)
       Api().get(`/?results=${data}`).then((response) => {

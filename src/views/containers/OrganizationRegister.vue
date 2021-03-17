@@ -38,7 +38,7 @@
         <v-col cols="12" lg="5" md="5" v-show="!adminMessenger">
           <div class="d-flex mt-14">
             <v-card class="pl-4 pr-4 pb-6" elevation="10" rounded="lg">
-              <v-form @submit.prevent="registerUser">
+              <v-form @submit.prevent="registerUser" v-model="register_valid">
                 <div class="image1 d-flex hidden-md-and-up justify-center">
                   <v-avatar size="70" class="login-img hidden-md-and-up mb-4">
                     <v-img src="../../assets/2130.jpg"> </v-img>
@@ -57,8 +57,13 @@
                   <v-row>
                     <h3 class="hidden-sm-and-down ml-3">Join Us</h3>
                     <v-col cols="12" class="pb-0">
-                      <label>Email</label>
+                      <label>Email * <span class="pl-4" v-show="this.disableEmail"><v-btn @click="changeEmail" color="accent"  x-small text link>Change email</v-btn> </span></label>
                       <v-text-field
+                        :disabled="this.disableEmail"
+                        :append-icon="this.checkMailIcon"
+                        :loading="emailCheckLoading"
+                        :rules="[required('Email'), validEmail()]"
+                        @blur="checkMail"
                         class="v-text-field"
                         outlined
                         dense
@@ -66,9 +71,10 @@
                       >
                       </v-text-field>
                     </v-col>
-                    <v-col cols="12" class="pb-0 pt-0">
-                      <label>First Name</label>
+                    <v-col cols="12" class="pb-0 pt-0" v-show="!exisitngUser">
+                      <label>First Name *</label>
                       <v-text-field
+                      :rules="[required('First Name')]"
                         class="v-text-field"
                         outlined
                         dense
@@ -76,9 +82,10 @@
                       >
                       </v-text-field>
                     </v-col>
-                    <v-col cols="12" class="pb-0 pt-0">
-                      <label>Surname</label>
+                    <v-col cols="12" class="pb-0 pt-0" v-show="!exisitngUser">
+                      <label>Last Name *</label>
                       <v-text-field
+                      :rules="[required('Last Name')]"
                         class="v-text-field"
                         outlined
                         dense
@@ -86,7 +93,7 @@
                       >
                       </v-text-field>
                     </v-col>
-                    <v-col cols="12" class="pb-0 pt-0">
+                    <v-col cols="12" class="pb-0 pt-0" v-show="!exisitngUser">
                       <label>Other Names</label>
                       <v-text-field
                         class="v-text-field"
@@ -96,22 +103,30 @@
                       >
                       </v-text-field>
                     </v-col>
-                    <v-col cols="12" class="pt-0 pb-0 pt-0">
-                      <label>Password</label>
+                    <v-col cols="12" class="pt-0 pb-0 pt-0" v-show="!exisitngUser">
+                      <label>Password *</label>
                       <v-text-field
+                      :rules="[required('Password'),minLength('Password', 8), maxLength('Password', 8)]"
+                      :type="passwordVisible ? 'text' : 'password'"
                         class="v-text-field"
                         outlined
                         dense
-                        v-model="registerForm.lastName"
+                        @click:append="passwordVisible = !passwordVisible"
+                        :append-icon="passwordVisible ? 'mdi-eye-off' : 'mdi-eye'"
+                        v-model="registerForm.password"
                       >
                       </v-text-field>
                     </v-col>
-                    <v-col cols="12" class="pt-0 pb-0">
-                      <label>Confirm Password</label>
+                    <v-col cols="12" class="pt-0 pb-0" v-show="!exisitngUser">
+                      <label>Confirm Password *</label>
                       <v-text-field
+                      :rules="[required('Confirm Password'), passwordMatch(this.registerForm.password), minLength('Password', 8), maxLength('Password', 8)]"
+                      :type="passwordVisible2 ? 'text' : 'password'"
                         class="v-text-field"
                         outlined
                         dense
+                        @click:append="passwordVisible2 = !passwordVisible2"
+                        :append-icon="passwordVisible2 ? 'mdi-eye-off' : 'mdi-eye'"
                         v-model="registerForm.passwordConfirm"
                       >
                       </v-text-field>
@@ -160,6 +175,7 @@
                     <v-col cols="12" class="pt-0">
                       <div class="d-flex justify-space-between pt-0">
                         <v-checkbox
+                        :rules="[required('Terms & Conditions')]"
                           class="mt-0"
                           label="I agree to terms and conditions"
                         >
@@ -208,11 +224,21 @@
   </div>
 </template>
 <script>
+import Api from '../../Services/api'
+import validations from '../../Services/validations'
 // import AlertComponent from '../../components/AlertComponent.vue'
 export default {
   name: 'OrganizationRegister',
   data () {
     return {
+      passwordVisible2: false,
+      passwordVisible: false,
+      disableEmail: false,
+      emailValid: true,
+      checkMailIcon: '',
+      exisitngUser: false,
+      emailCheckLoading: false,
+      register_valid: false,
       alertDialog: false,
       alertMessage: '',
       alertType: '',
@@ -229,21 +255,51 @@ export default {
       // eslint-disable-next-line no-undef
       registerForm: new Form({
         email: '',
+        username: '',
         password: '',
         firstName: '',
         lastName: '',
         otherNames: '',
         organizationCode: '',
         code: []
-      })
+      }),
+      ...validations
     }
   },
   methods: {
+    changeEmail () {
+      this.disableEmail = false
+      this.checkMailIcon = ''
+      this.exisitngUser = false
+    },
+    checkMail () {
+      const regex = /.+@.+\..+/
+      if (this.registerForm.email !== '' && regex.test(this.registerForm.email)) {
+        this.emailCheckLoading = true
+        Api().get(`/users?email=${this.registerForm.email}`).then((response) => {
+          const length = response.data.length
+          if (response.status === 200 && length > 0) {
+            console.log('sdsd...' + length)
+            this.exisitngUser = true
+            this.emailCheckLoading = false
+            this.checkMailIcon = 'mdi-check'
+            this.disableEmail = true
+          } else if (response.status === 200 && length <= 0) {
+            this.exisitngUser = false
+            this.emailCheckLoading = false
+            this.checkMailIcon = 'mdi-check'
+          }
+        }).catch(() => {
+          this.emailCheckLoading = false
+        })
+      }
+    },
     registerUser () {
       console.log(this.registerForm)
       this.alertMessage = 'Your message has been sent successfully.'
       this.alertType = 'success'
       this.alertDialog = true
+      this.$vuetify.goTo(0)
       this.hideAlert()
     },
     sendMessage (e) {
@@ -267,6 +323,8 @@ export default {
     closeDialog () {
       this.alertDialog = false
     }
+  },
+  computed: {
   },
   mounted () {
     // eslint-disable-next-line no-undef

@@ -32,7 +32,7 @@
       <v-btn link :to="organizationUrl ? `/pages/${organizationUrl}/register` : '/sign-up'">Register
       </v-btn>
       <v-spacer></v-spacer>
-      <v-btn to="/pages/new-group" link color="secondary">Users Page</v-btn>
+      <v-btn to="/pages" link color="secondary">Users Page</v-btn>
       <v-spacer></v-spacer>
       <v-btn color="primary" @click="gotToSlots">Slots</v-btn>
       <v-spacer></v-spacer>
@@ -51,7 +51,7 @@
     </v-app-bar>
 
     <v-main class="">
-      <v-container>
+      <v-container class="">
      <router-view></router-view>
       </v-container>
     </v-main>

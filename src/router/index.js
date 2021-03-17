@@ -32,6 +32,17 @@ const routes = [
     }
   },
   {
+    path: '/pages',
+    props: true,
+    name: 'Pages',
+    // route level code-splitting
+    // this generates a separate chunk (about.[hash].js) for this route
+    // which is lazy-loaded when the route is visited.
+    component: function () {
+      return import(/* webpackChunkName: "group-page" */ '../views/Pages.vue')
+    }
+  },
+  {
     path: '/pages/:organizationUrl',
     props: true,
     name: 'OrganizationPage',
@@ -96,6 +107,18 @@ const routes = [
     // which is lazy-loaded when the route is visited.
     component: function () {
       return import(/* webpackChunkName: "about" */ '../views/Users.vue')
+    }
+  },
+  {
+    path: '/404',
+    name: '404',
+    meta: {
+    },
+    // route level code-splitting
+    // this generates a separate chunk (about.[hash].js) for this route
+    // which is lazy-loaded when the route is visited.
+    component: function () {
+      return import(/* webpackChunkName: "login" */ '../views/containers/404.vue')
     }
   },
   {

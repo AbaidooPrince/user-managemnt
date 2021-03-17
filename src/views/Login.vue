@@ -116,10 +116,6 @@ export default {
   },
   methods: {
     loginUser () {
-      this.alertColor = 'success'
-      this.alertText = 'Successful'
-      this.alertDialog = true
-      this.loginLoading = false
       this.loginLoading = true
       login(this.login).then((response) => {
         console.log(response)
