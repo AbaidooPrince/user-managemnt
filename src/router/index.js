@@ -56,6 +56,7 @@ const routes = [
   {
     path: '/pages/:organizationUrl/login',
     name: 'OrganizationLogin',
+    props: true,
     meta: {
     },
     // route level code-splitting
@@ -68,6 +69,7 @@ const routes = [
   {
     path: '/pages/:organizationUrl/register',
     name: 'OrganizationRegister',
+    props: true,
     meta: {
     },
     // route level code-splitting

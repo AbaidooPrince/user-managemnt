@@ -21,6 +21,7 @@ const passwordMatch = (password) => {
   // eslint-disable-next-line no-mixed-operators
   return v => v && v === password || 'Passwords do no match'
 }
+
 export default {
   validEmail,
   required,

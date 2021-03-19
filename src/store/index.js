@@ -40,6 +40,9 @@ export default new Vuex.Store({
     },
     SET_SINGLE_ORGANIZATIONS (state, data) {
       state.organizationPage = data
+    },
+    SET_ORGANIZATION_TO_JOIN (state, data) {
+      state.organizationPage = data
     }
   },
   actions: {

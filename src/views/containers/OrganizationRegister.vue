@@ -10,6 +10,12 @@
     <v-container>
       <v-row justify-sm="center">
         <v-col cols="12" lg="7" md="7" sm="0" class="hidden-sm-and-down">
+          <v-alert
+          :value="this.invalidUrl"
+          type="warning"
+          text
+          >The Circle you are joining does not exist
+          </v-alert>
           <v-row class="mt-14">
             <v-col cols="12" class="pa-0">
               <v-img
@@ -38,7 +44,7 @@
         <v-col cols="12" lg="5" md="5" v-show="!adminMessenger">
           <div class="d-flex mt-14">
             <v-card class="pl-4 pr-4 pb-6" elevation="10" rounded="lg">
-              <v-form @submit.prevent="registerUser" v-model="register_valid">
+              <v-form @submit.prevent="validateCode" ref="userRegisterForm" v-model="register_valid">
                 <div class="image1 d-flex hidden-md-and-up justify-center">
                   <v-avatar size="70" class="login-img hidden-md-and-up mb-4">
                     <v-img src="../../assets/2130.jpg"> </v-img>
@@ -71,7 +77,7 @@
                       >
                       </v-text-field>
                     </v-col>
-                    <v-col cols="12" class="pb-0 pt-0" v-show="!exisitngUser">
+                    <v-col cols="12" class="pb-0 pt-0" v-show="!existingUser">
                       <label>First Name *</label>
                       <v-text-field
                       :rules="[required('First Name')]"
@@ -82,7 +88,7 @@
                       >
                       </v-text-field>
                     </v-col>
-                    <v-col cols="12" class="pb-0 pt-0" v-show="!exisitngUser">
+                    <v-col cols="12" class="pb-0 pt-0" v-show="!existingUser">
                       <label>Last Name *</label>
                       <v-text-field
                       :rules="[required('Last Name')]"
@@ -93,7 +99,7 @@
                       >
                       </v-text-field>
                     </v-col>
-                    <v-col cols="12" class="pb-0 pt-0" v-show="!exisitngUser">
+                    <v-col cols="12" class="pb-0 pt-0" v-show="!existingUser">
                       <label>Other Names</label>
                       <v-text-field
                         class="v-text-field"
@@ -103,7 +109,7 @@
                       >
                       </v-text-field>
                     </v-col>
-                    <v-col cols="12" class="pt-0 pb-0 pt-0" v-show="!exisitngUser">
+                    <v-col cols="12" class="pt-0 pb-0 pt-0" v-show="!existingUser">
                       <label>Password *</label>
                       <v-text-field
                       :rules="[required('Password'),minLength('Password', 8), maxLength('Password', 8)]"
@@ -117,7 +123,7 @@
                       >
                       </v-text-field>
                     </v-col>
-                    <v-col cols="12" class="pt-0 pb-0" v-show="!exisitngUser">
+                    <v-col cols="12" class="pt-0 pb-0" v-show="!existingUser">
                       <label>Confirm Password *</label>
                       <v-text-field
                       :rules="[required('Confirm Password'), passwordMatch(this.registerForm.password), minLength('Password', 8), maxLength('Password', 8)]"
@@ -136,36 +142,53 @@
                       <div class="d-flex justify-space-around">
                         <span class="">
                           <v-text-field
+                          type="text"
+                            id="code1"
                             class="v-text-field pl-4 pr-2"
                             outlined
                             dense
+                            :rules="[required('-')]"
+                            @keyup.prevent="toNextCode('code1', 'code2')"
+                            maxlength="1"
                             v-model="registerForm.code[0]"
                           >
                           </v-text-field>
                         </span>
                         <span>
                           <v-text-field
+                            id="code2"
                             class="v-text-field pl-2 pr-2"
                             outlined
                             dense
+                            :rules="[required('-')]"
+                            @keyup="toNextCode('code2', 'code3')"
+                            maxlength="1"
                             v-model="registerForm.code[1]"
                           >
                           </v-text-field>
                         </span>
                         <span>
                           <v-text-field
-                            class="v-text-field pl-2 pr-2"
+                            id="code3"
+                            class="v-text-field pl-2 pr-2 code"
                             outlined
+                            :rules="[required('-')]"
                             dense
+                            @keyup="toNextCode('code3', 'code4')"
+                            maxlength="1"
                             v-model="registerForm.code[2]"
                           >
                           </v-text-field>
                         </span>
                         <span>
                           <v-text-field
+                            id="code4"
                             class="v-text-field pl-2 pr-4"
                             outlined
                             dense
+                            :rules="[required('-')]"
+                            @keyup.prevent="toNextCode('code4', 'terms')"
+                            maxlength="1"
                             v-model="registerForm.code[3]"
                           >
                           </v-text-field>
@@ -175,6 +198,8 @@
                     <v-col cols="12" class="pt-0">
                       <div class="d-flex justify-space-between pt-0">
                         <v-checkbox
+                        id="terms"
+                        v-model="registerForm.terms"
                         :rules="[required('Terms & Conditions')]"
                           class="mt-0"
                           label="I agree to terms and conditions"
@@ -225,10 +250,11 @@
 </template>
 <script>
 import Api from '../../Services/api'
-import validations from '../../Services/validations'
+import validation from '../../Services/validation'
 // import AlertComponent from '../../components/AlertComponent.vue'
 export default {
   name: 'OrganizationRegister',
+  props: ['organizationUrl'],
   data () {
     return {
       passwordVisible2: false,
@@ -236,7 +262,8 @@ export default {
       disableEmail: false,
       emailValid: true,
       checkMailIcon: '',
-      exisitngUser: false,
+      existingUser: false,
+      existingUserData: {},
       emailCheckLoading: false,
       register_valid: false,
       alertDialog: false,
@@ -244,6 +271,8 @@ export default {
       alertType: '',
       adminMessenger: false,
       registerLoading: false,
+      validCode: false,
+      invalidUrl: false,
       // eslint-disable-next-line no-undef
       adminMessengerForm: new Form({
         senderEmail: '',
@@ -260,17 +289,60 @@ export default {
         firstName: '',
         lastName: '',
         otherNames: '',
-        organizationCode: '',
-        code: []
+        organizationSecret: '',
+        code: [],
+        terms: false
       }),
-      ...validations
+      ...validation
     }
   },
   methods: {
+    validateCode () {
+      this.registerForm.organizationSecret = this.registerForm.code.join('')
+      Api().get(`/organizations?organizationSecret=${this.registerForm.organizationSecret}`).then((response) => {
+        if (response.status === 200 && response.data.length !== 0) {
+          if (response.data.organizationUrl === this.organizationUrl) {
+            this.$store.commit('SET_ORGANIZATION_TO_JOIN', response.data[0])
+            this.validCode = true
+            this.addUser()
+          } else {
+            this.invalidUrl = true
+            setTimeout(() => {
+              this.$router.push('/pages')
+            }, 3000)
+          }
+        } else {
+          this.alertMessage = 'Something went wrong. Please check your secret and try again'
+          this.alertType = 'warning'
+          this.alertDialog = true
+          this.$vuetify.goTo(0)
+          this.hideAlert()
+        }
+      }).catch(() => {
+        this.alertMessage = 'Error Validating code. Please retry or input valid code'
+        this.alertType = 'error'
+        this.alertDialog = true
+        this.hideAlert()
+      })
+    },
+    addUser () {
+      this.registerForm.username = this.registerForm.email
+      if (this.existingUser) {
+        this.anotherRegistration(this.existingUserData.id, this.currentOrganizationPage.id)
+      } else {
+        this.registerUser()
+      }
+    },
+    toNextCode (field, nextField) {
+      if (document.getElementById(field).length === document.getElementById(field).maxlength) {
+        document.getElementById(field).setAttribute('style', 'text-transform: uppercase')
+        document.getElementById(nextField).focus()
+      }
+    },
     changeEmail () {
       this.disableEmail = false
       this.checkMailIcon = ''
-      this.exisitngUser = false
+      this.existingUser = false
     },
     checkMail () {
       const regex = /.+@.+\..+/
@@ -279,13 +351,13 @@ export default {
         Api().get(`/users?email=${this.registerForm.email}`).then((response) => {
           const length = response.data.length
           if (response.status === 200 && length > 0) {
-            console.log('sdsd...' + length)
-            this.exisitngUser = true
+            this.existingUserData = response.data[0]
+            this.existingUser = true
             this.emailCheckLoading = false
             this.checkMailIcon = 'mdi-check'
             this.disableEmail = true
           } else if (response.status === 200 && length <= 0) {
-            this.exisitngUser = false
+            this.existingUser = false
             this.emailCheckLoading = false
             this.checkMailIcon = 'mdi-check'
           }
@@ -295,12 +367,47 @@ export default {
       }
     },
     registerUser () {
+      if (!(this.$refs.userRegisterForm.validate())) return
       console.log(this.registerForm)
+      const userData = {
+        username: this.registerForm.username,
+        email: this.registerForm.email,
+        password: this.registerForm.password
+      }
+      Api().post('/auth/local/register', userData).then((response) => {
+        if (response.status === 200) {
+          this.registerLoading = false
+          this.anotherRegistration(response.data.id, this.currentOrganizationPage.id)
+        }
+      }).cath()
       this.alertMessage = 'Your message has been sent successfully.'
       this.alertType = 'success'
       this.alertDialog = true
       this.$vuetify.goTo(0)
       this.hideAlert()
+    },
+    addToOrganization () {
+
+    },
+    anotherRegistration (userId, organizationId) {
+      if (!this.registerForm.terms || this.registerForm.organizationSecret === '') {
+        this.$refs.userRegisterForm.validate()
+      }
+      const data = {
+        organization: organizationId,
+        users_permissions_user: userId
+      }
+      this.registerLoading = true
+      Api().post('/members', data).then((response) => {
+        if (response.status === 200) {
+          this.registerLoading = true
+          this.alertMessage = 'You registration was successful.'
+          this.alertType = 'success'
+          this.alertDialog = true
+          this.$vuetify.goTo(0)
+          this.hideAlert()
+        }
+      }).catch()
     },
     sendMessage (e) {
       console.log('emitted..' + e.alertType)
@@ -325,6 +432,11 @@ export default {
     }
   },
   computed: {
+    currentOrganizationPage: {
+      get () {
+        return this.$store.state.organizationPage
+      }
+    }
   },
   mounted () {
     // eslint-disable-next-line no-undef
