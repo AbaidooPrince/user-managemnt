@@ -2,7 +2,7 @@
     <div>
       <v-container>
         <v-row class="justify">
-          <v-col cols="3"
+          <v-col cols="12" lg="3" md="3" sm="4"
           v-for="(organ, o) in allOrganizations"
           :key="o"
           >

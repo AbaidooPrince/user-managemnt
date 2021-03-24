@@ -10,12 +10,6 @@
     <v-container>
       <v-row justify-sm="center">
         <v-col cols="12" lg="7" md="7" sm="0" class="hidden-sm-and-down">
-          <v-alert
-          :value="this.invalidUrl"
-          type="warning"
-          text
-          >The Circle you are joining does not exist
-          </v-alert>
           <v-row class="mt-14">
             <v-col cols="12" class="pa-0">
               <v-img
@@ -41,7 +35,7 @@
             </v-col>
           </v-row>
         </v-col>
-        <v-col cols="12" lg="5" md="5" v-show="!adminMessenger">
+        <v-col cols="12" lg="5" md="5" sm="8" v-show="!adminMessenger && !successfulRegistration">
           <div class="d-flex mt-14">
             <v-card class="pl-4 pr-4 pb-6" elevation="10" rounded="lg">
               <v-form @submit.prevent="validateCode" ref="userRegisterForm" v-model="register_valid">
@@ -78,7 +72,7 @@
                       </v-text-field>
                     </v-col>
                     <v-col cols="12" class="pb-0 pt-0" v-show="!existingUser">
-                      <label>First Name *</label>
+                      <label>Username *</label>
                       <v-text-field
                       :rules="[required('First Name')]"
                         class="v-text-field"
@@ -88,7 +82,7 @@
                       >
                       </v-text-field>
                     </v-col>
-                    <v-col cols="12" class="pb-0 pt-0" v-show="!existingUser">
+                    <!-- <v-col cols="12" class="pb-0 pt-0" v-show="!existingUser">
                       <label>Last Name *</label>
                       <v-text-field
                       :rules="[required('Last Name')]"
@@ -98,8 +92,8 @@
                         v-model="registerForm.lastName"
                       >
                       </v-text-field>
-                    </v-col>
-                    <v-col cols="12" class="pb-0 pt-0" v-show="!existingUser">
+                    </v-col> -->
+                    <!-- <v-col cols="12" class="pb-0 pt-0" v-show="!existingUser">
                       <label>Other Names</label>
                       <v-text-field
                         class="v-text-field"
@@ -108,7 +102,7 @@
                         v-model="registerForm.otherNames"
                       >
                       </v-text-field>
-                    </v-col>
+                    </v-col> -->
                     <v-col cols="12" class="pt-0 pb-0 pt-0" v-show="!existingUser">
                       <label>Password *</label>
                       <v-text-field
@@ -207,14 +201,18 @@
                         </v-checkbox>
                       </div>
                     </v-col>
-                    <v-col cols="12" class="d-flex justify-center pt-0">
+                    <v-col cols="12" class="d-inline justify-center pt-0">
+    <v-alert :value="this.invalidUrl" type="warning" text transition="linear"
+    >
+      You are registerting to a circle that does not exist.
+    </v-alert>
                       <v-btn
                         block
+                        v-text="this.buttonText"
                         :loading="registerLoading"
                         color="primary"
                         type="submit"
                       >
-                        Join
                       </v-btn>
                     </v-col>
                     <v-col cols="12" class="hidden-md-and-up">
@@ -244,6 +242,18 @@
               </v-card>
           </div>
         </v-col>
+        <v-col cols="12" lg="5" md="5" v-show="successfulRegistration && !adminMessenger">
+          <div class="mt-14">
+              <v-card class="pl-4 pr-4 pb-6 pt-6" elevation="10" rounded="lg">
+                <!-- <h3 class="ml-4 mb-2 primary--text">Successful Registration...</h3> -->
+                <div>
+                  <v-alert type="info" border="left" color="success" text>
+                  Your registration was successful. Please visit your mail to verify your account
+                  </v-alert>
+                </div>
+              </v-card>
+          </div>
+        </v-col>
       </v-row>
     </v-container>
   </div>
@@ -257,6 +267,8 @@ export default {
   props: ['organizationUrl'],
   data () {
     return {
+      successfulRegistration: false,
+      buttonText: 'Join',
       passwordVisible2: false,
       passwordVisible: false,
       disableEmail: false,
@@ -298,20 +310,28 @@ export default {
   },
   methods: {
     validateCode () {
-      this.registerForm.organizationSecret = this.registerForm.code.join('')
+      if (!(this.$refs.userRegisterForm.validate())) return
+      this.buttonText = 'Validating...'
+      this.registerForm.organizationSecret = this.registerForm.code.join('').toUpperCase()
       Api().get(`/organizations?organizationSecret=${this.registerForm.organizationSecret}`).then((response) => {
         if (response.status === 200 && response.data.length !== 0) {
-          if (response.data.organizationUrl === this.organizationUrl) {
+          this.buttonText = 'Registering...'
+          if (response.data[0].organizationUrl === this.organizationUrl) {
+            // console.log('checking url' + this.organi)
             this.$store.commit('SET_ORGANIZATION_TO_JOIN', response.data[0])
             this.validCode = true
             this.addUser()
           } else {
             this.invalidUrl = true
+            this.buttonText = 'Join'
             setTimeout(() => {
-              this.$router.push('/pages')
+              this.resetForm()
+              this.invalidUrl = false
+              // this.$router.push('/pages')
             }, 3000)
           }
         } else {
+          this.buttonText = 'Join'
           this.alertMessage = 'Something went wrong. Please check your secret and try again'
           this.alertType = 'warning'
           this.alertDialog = true
@@ -319,16 +339,24 @@ export default {
           this.hideAlert()
         }
       }).catch(() => {
-        this.alertMessage = 'Error Validating code. Please retry or input valid code'
+        this.buttonText = 'Join'
+        this.alertMessage = 'Error Validating code. Please retry or enter valid code'
         this.alertType = 'error'
         this.alertDialog = true
         this.hideAlert()
       })
     },
+    findIdByMail (email) {
+      Api().get(`/users?email=${email}`).then((response) => {
+        if (response.status === 200 && response.data.length !== 0) {
+          this.addToOrganization(response.data[0].id, this.currentOrganizationPage.id)
+          // this.existingUserData = response.data[0]
+        }
+      }).catch()
+    },
     addUser () {
-      this.registerForm.username = this.registerForm.email
       if (this.existingUser) {
-        this.anotherRegistration(this.existingUserData.id, this.currentOrganizationPage.id)
+        this.addToOrganization(this.existingUserData.id, this.currentOrganizationPage.id)
       } else {
         this.registerUser()
       }
@@ -368,6 +396,7 @@ export default {
     },
     registerUser () {
       if (!(this.$refs.userRegisterForm.validate())) return
+      this.buttonText = 'Registering...'
       console.log(this.registerForm)
       const userData = {
         username: this.registerForm.username,
@@ -376,20 +405,26 @@ export default {
       }
       Api().post('/auth/local/register', userData).then((response) => {
         if (response.status === 200) {
-          this.registerLoading = false
-          this.anotherRegistration(response.data.id, this.currentOrganizationPage.id)
+          this.addToOrganization(response.data.id, this.currentOrganizationPage.id)
         }
-      }).cath()
-      this.alertMessage = 'Your message has been sent successfully.'
-      this.alertType = 'success'
-      this.alertDialog = true
-      this.$vuetify.goTo(0)
-      this.hideAlert()
+      }).catch((error) => {
+        if (error.response.data.data.code === 'ESERVFAIL') {
+          this.findIdByMail(this.registerForm.email)
+        } else {
+          this.alertMessage = error.response.data.message[0].messages[0].message
+          this.alertType = 'error'
+          this.alertDialog = true
+          this.$vuetify.goTo(0)
+          this.hideAlert()
+          this.buttonText = 'Join'
+        }
+      })
     },
-    addToOrganization () {
-
+    resetForm () {
+      this.$refs.userRegisterForm.reset()
+      this.checkMailIcon = ''
     },
-    anotherRegistration (userId, organizationId) {
+    addToOrganization (userId, organizationId) {
       if (!this.registerForm.terms || this.registerForm.organizationSecret === '') {
         this.$refs.userRegisterForm.validate()
       }
@@ -400,14 +435,26 @@ export default {
       this.registerLoading = true
       Api().post('/members', data).then((response) => {
         if (response.status === 200) {
-          this.registerLoading = true
+          this.registerLoading = false
           this.alertMessage = 'You registration was successful.'
           this.alertType = 'success'
           this.alertDialog = true
           this.$vuetify.goTo(0)
           this.hideAlert()
+          this.buttonText = 'Join'
+          setTimeout(() => {
+            this.successfulRegistration = true
+          }, 1500)
         }
-      }).catch()
+      }).catch((error) => {
+        this.registerLoading = false
+        this.alertMessage = error.response.data.message[0].messages[0].message
+        this.alertType = 'error'
+        this.alertDialog = true
+        this.$vuetify.goTo(0)
+        this.hideAlert()
+        this.buttonText = 'Join'
+      })
     },
     sendMessage (e) {
       console.log('emitted..' + e.alertType)
@@ -425,7 +472,7 @@ export default {
     hideAlert () {
       setTimeout(() => {
         this.alertDialog = false
-      }, 2000)
+      }, 3000)
     },
     closeDialog () {
       this.alertDialog = false

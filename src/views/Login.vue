@@ -5,7 +5,7 @@
           <v-col cols="12" class="col-lg-6 col-md-8 col-sm-12">
           <div class="parent d-flex">
             <v-card class="image2 pl-4 pr-4 pb-6" rounded="lg">
-            <v-form @submit.prevent="loginUser">
+            <v-form @submit.prevent="loginUser" ref="loginUserForm" v-model="login_valid" >
               <div class="image1 d-flex justify-center">
                <v-avatar
                size="150"
@@ -88,7 +88,7 @@
 </template>
 <script>
 import AlertComponent from '../components/AlertComponent.vue'
-import { setAuthToken, login } from '../Services/auth'
+import { login } from '../Services/auth'
 // import * as Cookies from 'js-cookies'
 // import Api from '../Services/api'
 export default {
@@ -96,6 +96,7 @@ export default {
   name: 'Login',
   data () {
     return {
+      login_valid: false,
       loginLoading: false,
       alertText: '',
       alertDialog: false,
@@ -116,11 +117,12 @@ export default {
   },
   methods: {
     loginUser () {
+      if (!(this.$refs.loginUserForm.validate())) return
       this.loginLoading = true
       login(this.login).then((response) => {
         console.log(response)
         // if (response.status === 200) {
-        setAuthToken(response.data.jwt)
+        // setAuthToken(response.data.jwt)
         // Cookies.set(response.jwt)
         this.alertColor = 'success'
         this.alertText = 'Successful'
@@ -132,10 +134,10 @@ export default {
         }, 1000)
         // }
       }).catch((error) => {
-        console.log(error.response)
+        console.log(error)
         this.loginLoading = false
         this.alertColor = 'error'
-        this.alertText = error.response.data.message[0].messages[0].message
+        this.alertText = 'error.data.message[0].messages[0].message'
         this.alertDialog = true
         this.hideAlert()
       })

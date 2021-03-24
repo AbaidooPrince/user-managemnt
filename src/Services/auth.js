@@ -11,7 +11,7 @@ export function login (data) {
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve, reject) => {
     try {
-      const currentPage = store.state.page.currentPage
+      const currentPage = store.state.organizationPage
       const res = await api().post('/auth/local', data)
       alert('sd')
       if (res.status === 200) {
@@ -37,7 +37,8 @@ export function isLoggedIn () {
 
 // Organizer
 export function isOrganizer () {
-// const role = store.state.authentication.
+  const role = store.state.authentication.userRole
+  return role
 }
 
 // set token

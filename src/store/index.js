@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import createPersistedState from 'vuex-persistedstate'
 import Api from '../Services/api'
+import authentication from './modules/authentication'
 // import themes from './../plugins/themes'
 
 Vue.use(Vuex)
@@ -85,5 +86,6 @@ export default new Vuex.Store({
     }
   },
   modules: {
+    authentication
   }
 })
