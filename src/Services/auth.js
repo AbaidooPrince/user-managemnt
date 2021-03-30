@@ -1,5 +1,5 @@
 import store from '../store/index'
-import router from 'vue-router'
+// import router from 'vue-router'
 import * as Cookies from 'js-cookie'
 import api from './api'
 
@@ -11,18 +11,16 @@ export function login (data) {
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve, reject) => {
     try {
-      const currentPage = store.state.organizationPage
+      // const currentPage = store.state.organizationPage.organizationUrl
       const res = await api().post('/auth/local', data)
       alert('sd')
       if (res.status === 200) {
         setAuthToken(res.data.jwt)
         await store.dispatch('authentication/setCurrentUser', res.data)
         alert('er..')
-        if (res.data.user.role.type === 'authenticated') {
-          alert('auth')
-          router.push(`/pages/${currentPage}`)
-        } else if (res.data.user.role.type === 'organizer') {
-        }
+      } else {
+        alert('resolve')
+        resolve(res)
       }
     } catch (error) {
       reject(error)
@@ -34,11 +32,19 @@ export function isLoggedIn () {
   const authToken = store.state.authentication.authToken
   return !!authToken
 }
-
+// Member
+export function isMember () {
+  if (isLoggedIn()) {
+    const role = store.state.authentication.userRole.type
+    return role === 'authenticated'
+  } else return false
+}
 // Organizer
 export function isOrganizer () {
-  const role = store.state.authentication.userRole
-  return role
+  if (isLoggedIn()) {
+    const role = store.state.authentication.userRole.type
+    return role === 'organizer'
+  } else return false
 }
 
 // set token

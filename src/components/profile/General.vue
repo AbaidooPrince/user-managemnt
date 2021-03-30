@@ -6,8 +6,8 @@
                 </v-card-title>
 
                 <v-row>
-                    <v-cols>
-                    </v-cols>
+                    <v-col>
+                    </v-col>
                 </v-row>
             </v-card>
         </v-container>

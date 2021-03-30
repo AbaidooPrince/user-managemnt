@@ -1,11 +1,14 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
+import adminRoutes from './admin'
+import membersRoutes from './members'
+import { isLoggedIn } from '../Services/auth'
 import goTo from 'vuetify/es5/services/goto'
 
 Vue.use(VueRouter)
 
-const routes = [
+const indexRoutes = [
   {
     path: '/',
     name: 'Home',
@@ -35,6 +38,10 @@ const routes = [
     path: '/pages',
     props: true,
     name: 'Pages',
+    meta: {
+      requiresAuth: false,
+      page: 'general'
+    },
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
@@ -46,6 +53,10 @@ const routes = [
     path: '/pages/:organizationUrl',
     props: true,
     name: 'OrganizationPage',
+    meta: {
+      requiresAuth: false,
+      page: 'general'
+    },
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
@@ -58,6 +69,8 @@ const routes = [
     name: 'OrganizationLogin',
     props: true,
     meta: {
+      requiresAuth: false,
+      page: 'general'
     },
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
@@ -71,6 +84,8 @@ const routes = [
     name: 'OrganizationRegister',
     props: true,
     meta: {
+      requiresAuth: false,
+      page: 'general'
     },
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
@@ -80,9 +95,26 @@ const routes = [
     }
   },
   {
+    path: '/user/:organizationUrl',
+    props: true,
+    name: 'OrganizationAuthPage',
+    meta: {
+      requiresAuth: false,
+      page: 'general'
+    },
+    // route level code-splitting
+    // this generates a separate chunk (about.[hash].js) for this route
+    // which is lazy-loaded when the route is visited.
+    component: function () {
+      return import(/* webpackChunkName: "group-page" */ '../views/containers/OrganizationPage.vue')
+    }
+  },
+  {
     path: '/login',
     name: 'Login',
     meta: {
+      requiresAuth: false,
+      page: 'general'
     },
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
@@ -112,9 +144,25 @@ const routes = [
     }
   },
   {
+    path: '/403',
+    name: '403',
+    meta: {
+      requiresAuth: false,
+      page: 'user'
+    },
+    // route level code-splitting
+    // this generates a separate chunk (about.[hash].js) for this route
+    // which is lazy-loaded when the route is visited.
+    component: function () {
+      return import(/* webpackChunkName: "login" */ '../views/containers/Forbidden.vue')
+    }
+  },
+  {
     path: '/404',
     name: '404',
     meta: {
+      requiresAuth: false,
+      page: 'error'
     },
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
@@ -125,6 +173,10 @@ const routes = [
   },
   {
     path: '/profile',
+    meta: {
+      requiresAuth: true,
+      page: 'user'
+    },
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
@@ -135,6 +187,10 @@ const routes = [
       {
         path: '/profile',
         name: 'Profile',
+        meta: {
+          requiresAuth: true,
+          page: 'user'
+        },
         // route level code-splitting
         // this generates a separate chunk (about.[hash].js) for this route
         // which is lazy-loaded when the route is visited.
@@ -165,7 +221,7 @@ const routes = [
     ]
   }
 ]
-
+const routes = indexRoutes.concat(adminRoutes, membersRoutes)
 const router = new VueRouter({
   scrollBehavior: (to, from, savedPosition) => {
     let scrollTo = 0
@@ -184,15 +240,24 @@ const router = new VueRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  //
-  if (to.matched.some(record => record.meta.requiresAuth)) {
-    next({
-      path: '/',
-      query: { redirect: to.fullPath }
-    })
+  if (to.meta.requiresAuth === true) {
+    if (!(to.meta.page === 'general') && !isLoggedIn()) {
+      next({
+        path: '/403',
+        query: { redirect: to.fullPath }
+      })
+    } else if ((to.meta.page === 'user') && !isLoggedIn()) {
+      next({
+        path: '/403',
+        query: { redirect: to.fullPath }
+      })
+    } else {
+      next()
+    }
   } else {
     next()
   }
+  //
 })
 
 export default router

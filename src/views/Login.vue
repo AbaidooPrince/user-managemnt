@@ -90,7 +90,7 @@
 import AlertComponent from '../components/AlertComponent.vue'
 import { login } from '../Services/auth'
 // import * as Cookies from 'js-cookies'
-// import Api from '../Services/api'
+import Api from '../Services/api'
 export default {
   components: { AlertComponent },
   name: 'Login',
@@ -109,6 +109,16 @@ export default {
     }
   },
   computed: {
+    userRole: {
+      get () {
+        return this.$store.state.authentication.userRole
+      }
+    },
+    currentUser: {
+      get () {
+        return this.$store.state.authentication.currentUser
+      }
+    },
     organizationUrl: {
       get () {
         return this.$route.params.organizationUrl
@@ -119,25 +129,35 @@ export default {
     loginUser () {
       if (!(this.$refs.loginUserForm.validate())) return
       this.loginLoading = true
-      login(this.login).then((response) => {
+      login(this.login)
+      Api().post('/auth/local', this.login).then((response) => {
         console.log(response)
+        if (response.status === 200 && (response.data.user.role.type === 'authenticated')) {
+          this.$router.push('/profile')
+        } else if (response.status === 200 && ((response.data.user.role.type === 'organizer') || (response.data.user.role.type === 'branch_leader') || (response.data.user.role.type === 'group_leader'))) {
+          this.$router.push('/admin')
+        }
+        // if (response.data.user.role.type === 'authenticated') {
+        //   // this.loginLoading = false
+        //   alert('memeber')
+        //   this.$router.push('/profile')
+        //   // router.push(`/user/${currentPage}`)
+        // } else if ((response.data.user.role.type === 'organizer') || (response.data.user.role.type === 'branch_leader') || (response.data.user.role.type === 'group_leader')) {
+        //   this.$router.push(`/admin/${this.organizationUrl}`)
+        // }
         // if (response.status === 200) {
         // setAuthToken(response.data.jwt)
         // Cookies.set(response.jwt)
-        this.alertColor = 'success'
-        this.alertText = 'Successful'
-        this.alertDialog = true
-        this.loginLoading = false
+        // this.alertColor = 'success'
+        // this.alertText = 'Successful'
+        // this.alertDialog = true
+        // this.loginLoading = false
         this.hideAlert()
-        setTimeout(() => {
-          this.$router.push('/slots')
-        }, 1000)
-        // }
       }).catch((error) => {
         console.log(error)
         this.loginLoading = false
         this.alertColor = 'error'
-        this.alertText = 'error.data.message[0].messages[0].message'
+        this.alertText = error.response.message[0].messages[0].message
         this.alertDialog = true
         this.hideAlert()
       })
