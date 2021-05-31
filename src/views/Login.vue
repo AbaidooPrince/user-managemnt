@@ -129,13 +129,11 @@ export default {
     loginUser () {
       if (!(this.$refs.loginUserForm.validate())) return
       this.loginLoading = true
-      login(this.login)
       Api().post('/auth/local', this.login).then((response) => {
-        console.log(response)
-        if (response.status === 200 && (response.data.user.role.type === 'authenticated')) {
-          this.$router.push('/profile')
-        } else if (response.status === 200 && ((response.data.user.role.type === 'organizer') || (response.data.user.role.type === 'branch_leader') || (response.data.user.role.type === 'group_leader'))) {
-          this.$router.push('/admin')
+        login(response)
+        if (response.status === 200 && (response.data.user.blocked !== true)) {
+          this.handleRedirect(response.data.user.role)
+          // this.$router.push('/profile')
         }
         // if (response.data.user.role.type === 'authenticated') {
         //   // this.loginLoading = false
@@ -161,6 +159,15 @@ export default {
         this.alertDialog = true
         this.hideAlert()
       })
+    },
+    handleRedirect (role) {
+      if (role.type === 'authenticated') {
+        this.$router.push('/profile')
+      } else if ((role.type === 'organizer') || (role.type === 'branch_leader') || (role.type === 'group_leader')) {
+        this.$router.push('/admin')
+      } else if (role.type === 'admin') {
+        this.$router.push('/control')
+      }
     },
     hideAlert () {
       setTimeout(() => {

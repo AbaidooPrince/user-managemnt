@@ -1,7 +1,7 @@
 import store from '../store/index'
 // import router from 'vue-router'
 import * as Cookies from 'js-cookie'
-import api from './api'
+// import api from './api'
 
 const AUTH_TOKEN_KEY = 'authToken'
 // const SET_CURRENT_USER = 'currentUser'
@@ -12,15 +12,16 @@ export function login (data) {
   return new Promise(async (resolve, reject) => {
     try {
       // const currentPage = store.state.organizationPage.organizationUrl
-      const res = await api().post('/auth/local', data)
-      alert('sd')
-      if (res.status === 200) {
-        setAuthToken(res.data.jwt)
-        await store.dispatch('authentication/setCurrentUser', res.data)
-        alert('er..')
+      // const res = await api().post('/auth/local', data)
+      if (data.status === 200) {
+        if (data.data.user.confirmed === true) {
+          setAuthToken(data.data.jwt)
+          await store.dispatch('authentication/setCurrentUser', data.data)
+        } else {
+          resolve(data)
+        }
       } else {
-        alert('resolve')
-        resolve(res)
+        reject(data)
       }
     } catch (error) {
       reject(error)
@@ -39,11 +40,33 @@ export function isMember () {
     return role === 'authenticated'
   } else return false
 }
+// Organization Admin
+export function isOrganizationAdmin () {
+  if (isLoggedIn()) {
+    const role = store.state.authentication.userRole.type
+    return role === 'organizer' || role === 'branch_leader' || role === 'group_leader'
+  } else return false
+}
 // Organizer
 export function isOrganizer () {
   if (isLoggedIn()) {
     const role = store.state.authentication.userRole.type
     return role === 'organizer'
+  } else return false
+}
+
+// Brnach Leader
+export function isBranchLeader () {
+  if (isLoggedIn()) {
+    const role = store.state.authentication.userRole.type
+    return role === 'branch_leader'
+  } else return false
+}
+// Organizer
+export function isGroupLeader () {
+  if (isLoggedIn()) {
+    const role = store.state.authentication.userRole.type
+    return role === 'group_leader'
   } else return false
 }
 

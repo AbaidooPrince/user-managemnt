@@ -3,8 +3,9 @@ import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
 import adminRoutes from './admin'
 import membersRoutes from './members'
-import { isLoggedIn } from '../Services/auth'
+import { isLoggedIn, isOrganizationAdmin } from '../Services/auth'
 import goTo from 'vuetify/es5/services/goto'
+import organizationAdminRoutes from './organizationAdmin'
 
 Vue.use(VueRouter)
 
@@ -221,7 +222,7 @@ const indexRoutes = [
     ]
   }
 ]
-const routes = indexRoutes.concat(adminRoutes, membersRoutes)
+const routes = indexRoutes.concat(adminRoutes, membersRoutes, organizationAdminRoutes)
 const router = new VueRouter({
   scrollBehavior: (to, from, savedPosition) => {
     let scrollTo = 0
@@ -247,6 +248,11 @@ router.beforeEach((to, from, next) => {
         query: { redirect: to.fullPath }
       })
     } else if ((to.meta.page === 'user') && !isLoggedIn()) {
+      next({
+        path: '/403',
+        query: { redirect: to.fullPath }
+      })
+    } else if ((to.meta.page === 'organizationAdmin') && !isOrganizationAdmin()) {
       next({
         path: '/403',
         query: { redirect: to.fullPath }

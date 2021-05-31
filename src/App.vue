@@ -51,9 +51,7 @@
     </v-app-bar>
 
     <v-main class="">
-      <v-container class="">
      <router-view></router-view>
-      </v-container>
     </v-main>
   </v-app>
 </template>
